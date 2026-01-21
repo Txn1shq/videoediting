@@ -2,15 +2,7 @@
   "name": "video-editor-portfolio",
   "version": "1.0.0",
   "description": "Modern video editor portfolio website",
-  "scripts": {
-    "dev": "python -m http.server 8000",
-    "build": "echo 'Static site - no build needed'"
-  },
-  "keywords": [
-    "portfolio",
-    "video-editing",
-    "creative"
-  ],
+  "keywords": ["portfolio", "video-editing", "creative"],
   "author": "Your Name",
   "license": "MIT"
 }
