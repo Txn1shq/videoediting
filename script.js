@@ -44,7 +44,7 @@ const faqItems = document.querySelectorAll('.faq-item');
 
 faqItems.forEach(item => {
     const question = item.querySelector('.faq-question');
-    
+
     question.addEventListener('click', () => {
         // Close all other items
         faqItems.forEach(otherItem => {
@@ -52,7 +52,7 @@ faqItems.forEach(item => {
                 otherItem.classList.remove('active');
             }
         });
-        
+
         // Toggle current item
         item.classList.toggle('active');
     });
@@ -65,7 +65,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         e.preventDefault();
         const target = document.querySelector(this.getAttribute('href'));
-        
+
         if (target) {
             const offsetTop = target.offsetTop - 80;
             window.scrollTo({
@@ -123,9 +123,16 @@ if (window.innerWidth > 968) {
     cursorFollower.className = 'cursor-follower';
     document.body.appendChild(cursorFollower);
 
+    // Position variables
     let mouseX = 0, mouseY = 0;
     let cursorX = 0, cursorY = 0;
     let followerX = 0, followerY = 0;
+
+    // Scaling variables
+    let targetScale = 1;
+    let currentScale = 1;
+    let followerTargetScale = 1;
+    let followerCurrentScale = 1;
 
     document.addEventListener('mousemove', (e) => {
         mouseX = e.clientX;
@@ -133,18 +140,22 @@ if (window.innerWidth > 968) {
     });
 
     function animateCursor() {
-        // Smooth cursor movement
-        cursorX += (mouseX - cursorX) * 0.3;
-        cursorY += (mouseY - cursorY) * 0.3;
-        
+        // Smooth cursor movement (lerp)
+        // Main cursor moves quickly
+        cursorX += (mouseX - cursorX) * 0.2;
+        cursorY += (mouseY - cursorY) * 0.2;
+
+        // Follower moves slower with more drag
         followerX += (mouseX - followerX) * 0.1;
         followerY += (mouseY - followerY) * 0.1;
 
-        cursor.style.left = cursorX + 'px';
-        cursor.style.top = cursorY + 'px';
-        
-        cursorFollower.style.left = followerX + 'px';
-        cursorFollower.style.top = followerY + 'px';
+        // Smooth scaling
+        currentScale += (targetScale - currentScale) * 0.2;
+        followerCurrentScale += (followerTargetScale - followerCurrentScale) * 0.15;
+
+        // Apply transforms using translate3d for hardware acceleration
+        cursor.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0) translate(-50%, -50%) scale(${currentScale})`;
+        cursorFollower.style.transform = `translate3d(${followerX}px, ${followerY}px, 0) translate(-50%, -50%) scale(${followerCurrentScale})`;
 
         requestAnimationFrame(animateCursor);
     }
@@ -152,16 +163,16 @@ if (window.innerWidth > 968) {
 
     // Add hover effect to interactive elements
     const interactiveElements = document.querySelectorAll('a, button, .portfolio-item, .service-card');
-    
+
     interactiveElements.forEach(el => {
         el.addEventListener('mouseenter', () => {
-            cursor.style.transform = 'scale(0.5)';
-            cursorFollower.style.transform = 'scale(2)';
+            targetScale = 0.5;
+            followerTargetScale = 2; // Expand the ring
         });
-        
+
         el.addEventListener('mouseleave', () => {
-            cursor.style.transform = 'scale(1)';
-            cursorFollower.style.transform = 'scale(1)';
+            targetScale = 1;
+            followerTargetScale = 1;
         });
     });
 
@@ -174,22 +185,22 @@ if (window.innerWidth > 968) {
             pointer-events: none;
             border-radius: 50%;
             z-index: 9999;
+            top: 0;
+            left: 0;
+            /* Will-change helps browser optimize */
+            will-change: transform;
         }
         
         .custom-cursor {
             width: 10px;
             height: 10px;
             background: var(--accent-primary);
-            transform: translate(-50%, -50%);
-            transition: transform 0.2s ease;
         }
         
         .cursor-follower {
             width: 40px;
             height: 40px;
             border: 2px solid rgba(255, 107, 53, 0.3);
-            transform: translate(-50%, -50%);
-            transition: transform 0.3s ease;
         }
         
         body {
@@ -197,6 +208,11 @@ if (window.innerWidth > 968) {
         }
         
         a, button {
+            cursor: none;
+        }
+        
+        /* Hide default cursor on interactive elements as well to be safe */
+        .service-card, .portfolio-item {
             cursor: none;
         }
     `;
@@ -215,7 +231,7 @@ const closeModal = document.querySelector('.close-modal');
 // Helper to get embed URL from various YouTube formats
 function getEmbedUrl(url) {
     if (!url) return '';
-    
+
     // Handle standard YouTube URLs (youtube.com/watch?v=ID)
     let videoId = '';
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -223,7 +239,7 @@ function getEmbedUrl(url) {
 
     if (match && match[2].length === 11) {
         videoId = match[2];
-    } 
+    }
     // Handle YouTube Shorts (youtube.com/shorts/ID)
     else if (url.includes('youtube.com/shorts/')) {
         const shortsMatch = url.match(/shorts\/([^#&?]*)/);
@@ -242,10 +258,10 @@ function getEmbedUrl(url) {
 
 // Open video modal when portfolio item is clicked
 portfolioItems.forEach(item => {
-    item.addEventListener('click', function(e) {
+    item.addEventListener('click', function (e) {
         e.preventDefault();
         const videoSrc = this.getAttribute('data-video');
-        
+
         if (videoSrc) {
             const embedSrc = getEmbedUrl(videoSrc);
             modalVideo.src = embedSrc;
@@ -292,7 +308,7 @@ function animateCounter(element, target, duration = 2000) {
     let current = 0;
     const increment = target / (duration / 16);
     const suffix = element.textContent.replace(/[0-9]/g, '');
-    
+
     const timer = setInterval(() => {
         current += increment;
         if (current >= target) {
@@ -311,7 +327,7 @@ const statsObserver = new IntersectionObserver((entries) => {
             const number = entry.target;
             const text = number.textContent;
             const value = parseInt(text.replace(/\D/g, ''));
-            
+
             if (value && !number.classList.contains('counted')) {
                 number.classList.add('counted');
                 animateCounter(number, value);
@@ -330,7 +346,7 @@ document.querySelectorAll('.stat-number').forEach(stat => {
 window.addEventListener('scroll', () => {
     const scrolled = window.pageYOffset;
     const orbs = document.querySelectorAll('.gradient-orb');
-    
+
     orbs.forEach((orb, index) => {
         const speed = 0.5 + (index * 0.1);
         orb.style.transform = `translateY(${scrolled * speed}px)`;
@@ -349,7 +365,7 @@ function highlightNavigation() {
         const sectionHeight = section.offsetHeight;
         const sectionTop = section.offsetTop - 100;
         const sectionId = section.getAttribute('id');
-        
+
         if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
             document.querySelectorAll('.nav-link').forEach(link => {
                 link.classList.remove('active');
@@ -369,19 +385,19 @@ window.addEventListener('scroll', highlightNavigation);
 // This is a placeholder for future contact form functionality
 function validateForm(formData) {
     const errors = [];
-    
+
     if (!formData.name || formData.name.trim().length < 2) {
         errors.push('Please enter a valid name');
     }
-    
+
     if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
         errors.push('Please enter a valid email');
     }
-    
+
     if (!formData.message || formData.message.trim().length < 10) {
         errors.push('Please enter a message (at least 10 characters)');
     }
-    
+
     return errors;
 }
 
@@ -390,7 +406,7 @@ function validateForm(formData) {
 // ===================================
 window.addEventListener('load', () => {
     document.body.classList.add('loaded');
-    
+
     // Trigger hero animations
     setTimeout(() => {
         document.querySelector('.hero-content').style.opacity = '1';
